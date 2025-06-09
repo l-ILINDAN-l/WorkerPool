@@ -6,6 +6,7 @@ import (
 	"github.com/l-ILINDAN-l/WorkerPool/internal/pool"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 	"os"
 	"strings"
@@ -15,12 +16,15 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run pool workers in interactive mode",
 	// TODO: Update help, do doc with variables
-	Long: `This command run main cycle application, which use to manage workers and jobs`,
+	Long: `This command starts the main application cycle, which allows you to manage workers and jobs.
+Available commands in interactive mode:
+  add - add a new worker
+  remove - delete one worker.
+  exit - shut down the application.
+Any other text will be considered a processing job.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Info("Running application pool workers")
-
-		// TODO: initial count workers from config file
-		initialWorkers := 10
+		initialWorkers := viper.GetInt("workers.initial")
 		p := pool.NewPool(initialWorkers)
 		p.Start()
 
