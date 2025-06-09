@@ -10,12 +10,14 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
+// runCmd represents the run command.
+// It starts the worker pool in an interactive command-line mode.
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run pool workers in interactive mode",
-	// TODO: Update help, do doc with variables
 	Long: `This command starts the main application cycle, which allows you to manage workers and jobs.
 Available commands in interactive mode:
   add - add a new worker
@@ -40,6 +42,9 @@ Any other text will be considered a processing job.`,
 			switch command {
 			case "exit":
 				logrus.Info("Exiting application pool workers")
+				p.Shutdown()
+				time.Sleep(500 * time.Millisecond)
+				return
 			case "add":
 				logrus.Info("Adding new worker")
 				p.AddWorker()

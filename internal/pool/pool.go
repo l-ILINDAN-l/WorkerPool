@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+// Pool manages a collection of workers, dispatches jobs,
+// and handles dynamic scaling of the worker count.
 type Pool struct {
 	workers      map[int]*Worker
 	jobs         chan string
@@ -15,6 +17,8 @@ type Pool struct {
 	nextWorkerID int
 }
 
+// NewPool creates and initializes a new worker pool with a specified
+// number of initial workers.
 func NewPool(initialWorkers int) *Pool {
 	p := &Pool{
 		workers:      make(map[int]*Worker),
@@ -33,10 +37,13 @@ func NewPool(initialWorkers int) *Pool {
 	return p
 }
 
+// AddWorker sends a signal to the pool to add a new worker.
 func (p *Pool) AddWorker() {
 	p.addWorker <- struct{}{}
 }
 
+// addNewWorker creates a new worker, adds it to the pool, and starts it.
+// This is an internal method and is not thread-safe without external locking.
 func (p *Pool) addNewWorker() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -49,10 +56,13 @@ func (p *Pool) addNewWorker() {
 	go worker.Start()
 }
 
+// RemoveWorker sends a signal to the pool to remove one worker.
 func (p *Pool) RemoveWorker() {
 	p.removeWorker <- struct{}{}
 }
 
+// popWorker stops and removes one worker from the pool.
+// It targets the worker with the highest ID for simplicity.
 func (p *Pool) popWorker() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -75,6 +85,8 @@ func (p *Pool) popWorker() {
 	}
 }
 
+// Start runs the pool's main management loop in a separate goroutine.
+// This loop listens for control signals to scale or shut down the pool
 func (p *Pool) Start() {
 	go func() {
 		logrus.Info("Starting pool")
@@ -93,6 +105,7 @@ func (p *Pool) Start() {
 	}()
 }
 
+// stopAllWorkers stops all active workers and closes the jobs channel.
 func (p *Pool) stopAllWorkers() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -107,10 +120,12 @@ func (p *Pool) stopAllWorkers() {
 	close(p.jobs)
 }
 
+// Shutdown initiates a graceful shutdown of the entire worker pool.
 func (p *Pool) Shutdown() {
 	close(p.shutdown)
 }
 
+// SubmitJob sends a new job to the jobs channel for a worker to process.
 func (p *Pool) SubmitJob(job string) {
 	p.jobs <- job
 }
